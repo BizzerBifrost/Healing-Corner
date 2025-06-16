@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% csrf_token %}
+    <style>
+        body {
+            background: linear-gradient(135deg, #f7f5d3 0%, #e8f5e8 50%, #fff8dc 100%);
+            min-height: 100vh;
+        }
+        .selection-box {
+            border: 2px solid #7fb069;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #fff8dc 0%, #f5f5dc 100%);
+            box-shadow: 0 4px 6px rgba(127, 176, 105, 0.1);
+        }
+        .selection-item {
+            cursor: pointer;
+            padding: 12px 18px;
+            margin: 8px;
+            border: 2px solid #7fb069;
+            border-radius: 8px;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        .selection-item:hover {
+            background: linear-gradient(135deg, #7fb069 0%, #6ba558 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(127, 176, 105, 0.3);
+        }
+        .selection-item.selected {
+            background: linear-gradient(135deg, #7fb069 0%, #6ba558 100%);
+            color: white;
+            border-color: #5d8a47;
+            box-shadow: 0 4px 12px rgba(127, 176, 105, 0.4);
+        }
+        .receipt-box {
+            background: linear-gradient(135deg, #fff8dc 0%, #f5f5dc 100%);
+            border: 2px solid #7fb069;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 10px rgba(127, 176, 105, 0.15);
+        }
+        .modal-qr {
+            width: 673px;
+            height: 683px;
+            background: linear-gradient(135deg, #f7f5d3 0%, #e8f5e8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed #7fb069;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .modal-qr img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .history-item {
+            cursor: pointer;
+            padding: 15px;
+            border: 1px solid #7fb069;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+            transition: all 0.3s ease;
+        }
+        .history-item:hover {
+            background: linear-gradient(135deg, #f7f5d3 0%, #e8f5e8 100%);
+            transform: translateX(5px);
+            box-shadow: 0 3px 6px rgba(127, 176, 105, 0.2);
+        }
+        .history-item.active {
+            background: linear-gradient(135deg, #7fb069 0%, #6ba558 100%);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(127, 176, 105, 0.4);
+        }
+        .history-item.loading {
+            background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+            color: #2c3e50;
+            position: relative;
+        }
+        .history-item.loading::after {
+            content: "Loading...";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #7fb069 0%, #6ba558 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(127, 176, 105, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #6ba558 0%, #5d8a47 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(127, 176, 105, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 15px 40px;
+            font-weight: 700;
+            color: #2c3e50;
+            box-shadow: 0 4px 8px rgba(241, 196, 15, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(241, 196, 15, 0.4);
+            color: white;
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+        }
+        .card-custom {
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+            border: 2px solid #7fb069;
+            border-radius: 12px;
+            box-shadow: 0 6px 10px rgba(127, 176, 105, 0.15);
+        }
+        .earnings-card {
+            background: linear-gradient(135deg, #7fb069 0%, #6ba558 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 12px rgba(127, 176, 105, 0.3);
+        }
+        .form-control, .form-select {
+            border: 2px solid #7fb069;
+            border-radius: 8px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #6ba558;
+            box-shadow: 0 0 0 0.2rem rgba(127, 176, 105, 0.25);
+        }
+        h1, h3, h4 {
+            color: #4a5568;
+        }
+        .text-green-600 {
+            color: #7fb069 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">🍹 Healing Corner Drink Order 🍹</h1>
+        
+        <!-- Order Form -->
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Drink Selection -->
+                <div class="selection-box">
+                    <h3 class="text-lg font-semibold mb-3">Choose Your Drink</h3>
+                    <div class="flex flex-wrap">
+                        <div class="selection-item" data-drink="green_tea" data-price="5">
+                            Green Tea (RM 5)
+                        </div>
+                        <div class="selection-item" data-drink="chocolate" data-price="5">
+                            Chocolate (RM 5)
+                        </div>
+                        <div class="selection-item" data-drink="latte" data-price="5">
+                            Latte (RM 5)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boba Selection -->
+                <div class="selection-box">
+                    <h3 class="text-lg font-semibold mb-3">Add Boba</h3>
+                    <div class="flex flex-wrap">
+                        <div class="selection-item" data-boba="false" data-price="0">
+                            No Boba
+                        </div>
+                        <div class="selection-item" data-boba="true" data-price="1">
+                            Tambah Boba lebih (+RM 1)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COD Selection -->
+                <div class="selection-box">
+                    <h3 class="text-lg font-semibold mb-3">Delivery Option</h3>
+                    <div class="flex flex-wrap">
+                        <div class="selection-item" data-cod="false" data-price="0">
+                            No COD
+                        </div>
+                        <div class="selection-item" data-cod="true" data-price="1.5">
+                            COD (+RM 1.50)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Code Button -->
+                <div class="text-center mb-4">
+                    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#qrModal">
+                        Show QR Code
+                    </button>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="selection-box">
+                    <h3 class="text-lg font-semibold mb-3">Payment Status</h3>
+                    <div class="flex flex-wrap">
+                        <div class="selection-item" data-payment="not_paid">
+                            Not Paid
+                        </div>
+                        <div class="selection-item" data-payment="paid">
+                            Paid
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information Form -->
+                <div class="card-custom p-4 mb-4">
+                    <h3 class="text-lg font-semibold mb-3">Customer Information</h3>
+                    <div class="mb-3">
+                        <label for="recipientName" class="form-label">Recipient Name</label>
+                        <input type="text" class="form-control" id="recipientName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="roomNumber" class="form-label">Room Number</label>
+                        <input type="text" class="form-control" id="roomNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <select class="form-select" id="location" required>
+                            <option value="">Select Location</option>
+                            <option value="idaman">Idaman</option>
+                            <option value="ilham">Ilham</option>
+                            <option value="impian">Impian</option>
+                            <option value="psn">PSN</option>
+                            <option value="surau">Surau</option>
+                            <option value="cafe">Cafe</option>
+                            <option value="self_pickup">Self-Pickup</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Confirm Order Button -->
+                <div class="text-center">
+                    <button type="button" class="btn btn-success btn-lg" id="confirmOrder">
+                        Confirm Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Receipt and Summary -->
+            <div class="col-md-4">
+                <div class="receipt-box">
+                    <h3 class="text-lg font-semibold mb-3">Order Summary</h3>
+                    <div id="orderSummary">
+                        <p>Please select your drink first</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total: </strong>
+                        <strong id="totalPrice">RM 0.00</strong>
+                    </div>
+                </div>
+
+                <!-- Today's Earnings -->
+                <div class="earnings-card">
+                    <h4 class="text-lg font-semibold mb-2">Today's Earnings</h4>
+                    <p class="text-3xl font-bold">RM {{ today_earnings|floatformat:2 }}</p>
+                </div>
+
+                <!-- Recent History (Today) -->
+                <div class="card-custom p-4 mb-4">
+                    <h4 class="text-lg font-semibold mb-3">Recent History (Today)</h4>
+                    <div id="recentHistory" style="max-height: 300px; overflow-y: auto;">
+                        {% for order in today_orders %}
+                        <div class="history-item" id="order-{{ order.id }}">
+                            <div class="font-medium text-gray-800">{{ order.recipient_name }}</div>
+                            <div class="text-sm text-gray-600">
+                                Room: {{ order.room_number }} | {{ order.get_location_display }}
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                {{ order.get_drink_display }}
+                                {% if order.add_boba %} + Boba{% endif %}
+                                {% if order.cod %} + COD{% endif %}
+                            </div>
+                            <div class="text-sm d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if order.payment_status == 'paid' %}
+                                        <span class="badge bg-success">
+                                            {{ order.get_payment_status_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning" id="status-{{ order.id }}">
+                                            {{ order.get_payment_status_display }}
+                                        </span>
+                                        <button class="btn btn-xs btn-success ms-1 mark-paid-btn" 
+                                                data-order-id="{{ order.id }}" 
+                                                id="mark-paid-{{ order.id }}"
+                                                style="font-size: 10px; padding: 2px 6px; border-radius: 4px;">
+                                            Mark Paid
+                                        </button>
+                                    {% endif %}
+                                </div>
+                                <span class="font-semibold text-green-600">RM {{ order.total_price }}</span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500">No orders today</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Monthly History -->
+                <div class="card-custom p-4">
+                    <h4 class="text-lg font-semibold mb-3">Monthly Reports</h4>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="monthSearch" placeholder="Search month (e.g., June, July, August)">
+                    </div>
+                    <div id="monthlyHistory" style="max-height: 300px; overflow-y: auto;">
+                        {% for month in all_months %}
+                        <div class="history-item" data-month="{{ month.year }}-{{ month.month|stringformat:'02d' }}">
+                            {{ month|date:'F Y' }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div id="monthDetails" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qrModalLabel">Payment QR Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="modal-qr mx-auto">
+                        <img src="{% static 'images/qr.jpg' %}" alt="Payment QR Code" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        let selectedDrink = null;
+        let selectedBoba = false;
+        let selectedCOD = false;
+        let selectedPayment = 'not_paid';
+
+        // Handle drink selection
+        document.querySelectorAll('[data-drink]').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('[data-drink]').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedDrink = this.dataset.drink;
+                updateOrderSummary();
+            });
+        });
+
+        // Handle boba selection
+        document.querySelectorAll('[data-boba]').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('[data-boba]').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedBoba = this.dataset.boba === 'true';
+                updateOrderSummary();
+            });
+        });
+
+        // Handle COD selection
+        document.querySelectorAll('[data-cod]').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('[data-cod]').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedCOD = this.dataset.cod === 'true';
+                updateLocationOptions();
+                updateOrderSummary();
+            });
+        });
+
+        // Handle payment status selection
+        document.querySelectorAll('[data-payment]').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('[data-payment]').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedPayment = this.dataset.payment;
+            });
+        });
+
+        // Set default selections
+        document.querySelector('[data-boba="false"]').classList.add('selected');
+        document.querySelector('[data-cod="false"]').classList.add('selected');
+        document.querySelector('[data-payment="not_paid"]').classList.add('selected');
+        
+        // Initialize location options based on default COD selection
+        updateLocationOptions();
+
+        function updateLocationOptions() {
+            const locationSelect = document.getElementById('location');
+            const currentValue = locationSelect.value;
+            
+            // Clear all options except the first placeholder
+            locationSelect.innerHTML = '<option value="">Select Location</option>';
+            
+            if (selectedCOD) {
+                // COD selected - show all locations except Self-Pickup
+                const codLocations = [
+                    { value: 'idaman', text: 'Idaman' },
+                    { value: 'ilham', text: 'Ilham' },
+                    { value: 'impian', text: 'Impian' },
+                    { value: 'psn', text: 'PSN' },
+                    { value: 'surau', text: 'Surau' },
+                    { value: 'cafe', text: 'Cafe' }
+                ];
+                
+                codLocations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.value;
+                    option.textContent = location.text;
+                    locationSelect.appendChild(option);
+                });
+                
+                // If current value was self_pickup, clear it since it's not available
+                if (currentValue === 'self_pickup') {
+                    locationSelect.value = '';
+                } else {
+                    locationSelect.value = currentValue;
+                }
+                
+            } else {
+                // No COD selected - only show Self-Pickup
+                const option = document.createElement('option');
+                option.value = 'self_pickup';
+                option.textContent = 'Self-Pickup';
+                locationSelect.appendChild(option);
+                
+                // Auto-select Self-Pickup since it's the only option
+                locationSelect.value = 'self_pickup';
+            }
+        }
+
+        function updateOrderSummary() {
+            const summaryDiv = document.getElementById('orderSummary');
+            const totalPriceDiv = document.getElementById('totalPrice');
+            
+            if (!selectedDrink) {
+                summaryDiv.innerHTML = '<p>Please select your drink first</p>';
+                totalPriceDiv.textContent = 'RM 0.00';
+                return;
+            }
+
+            let total = 5.00; // Base price
+            let summary = '';
+
+            // Add drink
+            const drinkNames = {
+                'green_tea': 'Green Tea',
+                'chocolate': 'Chocolate',
+                'latte': 'Latte'
+            };
+            summary += `<div class="d-flex justify-content-between">
+                <span>${drinkNames[selectedDrink]}</span>
+                <span>RM 5.00</span>
+            </div>`;
+
+            // Add boba if selected
+            if (selectedBoba) {
+                summary += `<div class="d-flex justify-content-between">
+                    <span>+ Boba</span>
+                    <span>RM 1.00</span>
+                </div>`;
+                total += 1.00;
+            }
+
+            // Add COD if selected
+            if (selectedCOD) {
+                summary += `<div class="d-flex justify-content-between">
+                    <span>+ COD</span>
+                    <span>RM 1.50</span>
+                </div>`;
+                total += 1.50;
+            }
+
+            summaryDiv.innerHTML = summary;
+            totalPriceDiv.textContent = `RM ${total.toFixed(2)}`;
+        }
+
+        // Confirm order
+        document.getElementById('confirmOrder').addEventListener('click', function() {
+            if (!selectedDrink) {
+                alert('Please select a drink');
+                return;
+            }
+
+            const recipientName = document.getElementById('recipientName').value;
+            const roomNumber = document.getElementById('roomNumber').value;
+            const location = document.getElementById('location').value;
+
+            if (!recipientName || !roomNumber || !location) {
+                alert('Please fill in all customer information');
+                return;
+            }
+
+            // Add loading state to button
+            const originalText = this.textContent;
+            this.textContent = 'Processing...';
+            this.disabled = true;
+            this.style.opacity = '0.6';
+
+            const orderData = {
+                drink: selectedDrink,
+                add_boba: selectedBoba,
+                cod: selectedCOD,
+                recipient_name: recipientName,
+                room_number: roomNumber,
+                location: location,
+                payment_status: selectedPayment
+            };
+
+            fetch('/create-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success state
+                    this.textContent = 'Order Confirmed!';
+                    this.style.backgroundColor = '#22c55e';
+                    
+                    // Reload page after showing success
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 1500);
+                } else {
+                    alert('Error creating order');
+                    // Reset button
+                    this.textContent = originalText;
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating order');
+                // Reset button
+                this.textContent = originalText;
+                this.disabled = false;
+                this.style.opacity = '1';
+            });
+        });
+
+        // Mark as paid functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('mark-paid-btn')) {
+                const orderId = e.target.dataset.orderId;
+                const button = e.target;
+                const statusBadge = document.getElementById(`status-${orderId}`);
+                
+                // Add loading state to button
+                const originalText = button.textContent;
+                button.textContent = 'Processing...';
+                button.disabled = true;
+                button.style.opacity = '0.6';
+                
+                // Send request to mark as paid
+                fetch('/mark-paid/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the status badge
+                        statusBadge.className = 'badge bg-success';
+                        statusBadge.textContent = 'Paid';
+                        
+                        // Remove the button
+                        button.remove();
+                        
+                        // Show success message briefly
+                        const successMsg = document.createElement('span');
+                        successMsg.className = 'text-success small ms-2';
+                        successMsg.textContent = '✓ Updated';
+                        statusBadge.parentNode.appendChild(successMsg);
+                        
+                        // Remove success message after 2 seconds
+                        setTimeout(() => {
+                            if (successMsg.parentNode) {
+                                successMsg.remove();
+                            }
+                        }, 2000);
+                        
+                        // Update today's earnings
+                        updateTodaysEarnings();
+                        
+                    } else {
+                        alert('Error updating payment status');
+                        // Reset button
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating payment status');
+                    // Reset button
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                });
+            }
+        });
+
+        // Function to update today's earnings display
+        function updateTodaysEarnings() {
+            fetch('/todays-earnings/')
+                .then(response => response.json())
+                .then(data => {
+                    const earningsElement = document.querySelector('.earnings-card p');
+                    if (earningsElement) {
+                        earningsElement.textContent = `RM ${data.today_earnings}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating earnings:', error);
+                });
+        }
+
+        // Monthly history functionality
+        document.querySelectorAll('[data-month]').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all month items
+                document.querySelectorAll('[data-month]').forEach(i => {
+                    i.classList.remove('active', 'loading');
+                });
+                
+                // Add loading class to clicked item
+                this.classList.add('loading');
+                
+                const month = this.dataset.month;
+                fetch(`/month-orders/${month}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Remove loading and add active class
+                        this.classList.remove('loading');
+                        this.classList.add('active');
+                        
+                        let html = `<h5>Orders for ${data.month_name}</h5>`;
+                        html += `<p><strong>Total Earnings: RM ${data.total_earnings}</strong></p>`;
+                        html += `<p><strong>Total Orders: ${data.orders.length}</strong></p>`;
+                        
+                        if (data.orders.length === 0) {
+                            html += `<p class="text-muted">No orders found for this month.</p>`;
+                        } else {
+                            data.orders.forEach(order => {
+                                html += `<div class="border p-2 mb-2 rounded">
+                                    <div><strong>${order.recipient_name}</strong> - ${order.location}</div>
+                                    <div>${order.drink}`;
+                                if (order.add_boba) html += ' + Boba';
+                                if (order.cod) html += ' + COD';
+                                html += `</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="badge bg-${order.payment_status === 'Paid' ? 'success' : 'warning'}">${order.payment_status}</span>
+                                        <span>RM ${order.total_price}</span>
+                                    </div>
+                                    <small class="text-muted">${order.date} ${order.created_at}</small>
+                                </div>`;
+                            });
+                        }
+                        
+                        document.getElementById('monthDetails').innerHTML = html;
+                    })
+                    .catch(error => {
+                        // Remove loading class and show error
+                        this.classList.remove('loading');
+                        console.error('Error:', error);
+                        document.getElementById('monthDetails').innerHTML = `<p class="text-danger">Error loading data. Please try again.</p>`;
+                    });
+            });
+        });
+
+        // Month search functionality
+        document.getElementById('monthSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const monthItems = document.querySelectorAll('[data-month]');
+            
+            monthItems.forEach(item => {
+                const monthText = item.textContent.toLowerCase();
+                
+                if (monthText.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize order summary on page load
+        updateOrderSummary();
+    </script>
+</body>
+</html>
